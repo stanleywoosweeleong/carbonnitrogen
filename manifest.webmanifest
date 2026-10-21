@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "碳氮学习园 · C:N Learning Garden",
+  "short_name": "碳氮学习园",
+  "description": "给农友的碳氮比学习园 · C:N learning for farmers · Pembelajaran C:N untuk petani",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f6f0",
+  "theme_color": "#254b39",
+  "categories": ["education", "agriculture"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
