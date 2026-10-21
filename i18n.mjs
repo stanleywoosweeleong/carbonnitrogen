@@ -16,9 +16,9 @@ export function translateDom(lang){
  document.documentElement.lang=lang==='zh'?'zh-CN':lang;
  document.getElementById('language-switch').setAttribute('aria-label',lang==='zh'?'选择语言':lang==='ms'?'Pilih bahasa':'Choose language');
  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
- while((n=walker.nextNode())){if(n.parentElement?.closest('script,style,#language-switch'))continue;const raw=n.nodeValue,trim=raw.trim();if(!trim)continue;let changed=translateText(trim,lang);if(changed!==trim)n.nodeValue=raw.replace(trim,changed);}
+ while((n=walker.nextNode())){if(n.parentElement?.closest('script,style,#language-switch,.notranslate'))continue;const raw=n.nodeValue,trim=raw.trim();if(!trim)continue;let changed=translateText(trim,lang);if(changed!==trim)n.nodeValue=raw.replace(trim,changed);}
  for(const el of document.querySelectorAll('[aria-label],[placeholder],[title]')){if(el.id==='language-switch')continue;for(const key of ['aria-label','placeholder','title'])if(el.hasAttribute(key))el.setAttribute(key,translateText(el.getAttribute(key),lang));}
  document.title=translateText(document.title,lang);
  document.querySelector('meta[name="description"]').content=lang==='zh'?'给农友的碳氮比学习园：通过互动示例、生长阶段、作物研究与小测验学习 C:N。不需要仪器或检测结果。':lang==='ms'?'Pelajaran C:N untuk pekebun: contoh interaktif, peringkat pertumbuhan, bukti tanaman dan kuiz. Tidak memerlukan alat atau keputusan ujian.':'C:N lessons for growers: interactive examples, growth stages, crop evidence and quizzes. No equipment or test results required.';
 }
-export function prepareLanguageSelect(lang){for(const option of document.querySelectorAll('#source-type option'))if(!option.hasAttribute('value'))option.value=option.textContent;document.getElementById('language-switch').value=lang;}
+export function prepareLanguageSelect(lang){for(const option of document.querySelectorAll('#source-type option'))if(!option.hasAttribute('value'))option.value=option.textContent;document.getElementById('language-switch').textContent={zh:'中文',en:'EN',ms:'BM'}[lang];}

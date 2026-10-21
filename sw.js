@@ -1,42 +1,47 @@
-// C:N Learning Garden service worker — offline-first.
-// VERSION and FILES are rewritten by `node update-sw.mjs` (run it after editing anything in dist/).
-const VERSION = '2b59681a7a3a';
-const FILES = ["./","./actions.mjs","./app.js","./catalog.mjs","./cn-decision.mjs","./core.mjs","./crop-tiles.mjs","./durian-guide.mjs","./education.mjs","./flower.mjs","./guide.mjs","./i18n-crops.mjs","./i18n-en.mjs","./i18n-ms.mjs","./i18n-research.mjs","./i18n-ui.mjs","./i18n.mjs","./icons/apple-touch-icon.png","./icons/favicon-32.png","./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png","./icons/icon.svg","./index.html","./manifest.webmanifest","./pwa.mjs","./sources.mjs","./style.css"];
-const CACHE = 'cn-garden-' + VERSION;
+// C:N Learning Garden service worker — no build step, no version number to bump.
+// Online: always fetch the latest file (so a new upload reaches phones on their next open)
+//         and keep a copy. Slow signal: use the saved copy after 3 seconds.
+// Offline: use the saved copy.
+const CACHE = 'cn-garden';
+const WAIT_MS = 3000;
 
-self.addEventListener('install', event => {
-  // All-or-nothing: if any file fails to download, the old version stays in charge.
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES.map(f => new Request(f, {cache: 'reload'})))));
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+
+// The page sends the list of files it has already loaded, so the very first visit
+// is saved for offline use without keeping a file list here.
+self.addEventListener('message', event => {
+  if (event.data?.type !== 'save') return;
+  event.waitUntil(caches.open(CACHE).then(async cache => {
+    const results = await Promise.all(event.data.urls.map(url =>
+      fetch(url).then(res => res.ok && cache.put(keyOf(url), res).then(() => true)).catch(() => false)));
+    event.ports[0]?.postMessage({saved: results.filter(Boolean).length, total: results.length});
+  }));
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    for (const key of await caches.keys()) if (key.startsWith('cn-garden-') && key !== CACHE) await caches.delete(key);
-    await self.clients.claim();
-  })());
-});
-
-// The page asks the waiting worker to take over when the farmer taps "update".
-self.addEventListener('message', event => { if (event.data === 'skip-waiting') self.skipWaiting(); });
+// One saved copy per file: drop "?lang=en" etc., and store pages under index.html.
+function keyOf(url) {
+  const u = new URL(url, self.location.href);
+  return u.origin + (u.pathname.endsWith('/') ? u.pathname + 'index.html' : u.pathname);
+}
 
 self.addEventListener('fetch', event => {
   const req = event.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-  if (url.origin !== location.origin) return; // research links etc. go straight to the network
-
+  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return; // research links go straight to the web
+  const key = keyOf(req.url);
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    // ignoreSearch: app.js?v=…, durian-guide.mjs?v=… and index.html?lang=en all map to the cached file.
-    if (req.mode === 'navigate') {
-      return (await cache.match('./index.html')) || fetch(req);
-    }
-    const hit = await cache.match(req, {ignoreSearch: true});
-    if (hit) return hit;
+    const network = fetch(req).then(res => {
+      if (res.ok) cache.put(key, res.clone());
+      return res;
+    });
+    const timeout = new Promise(resolve => setTimeout(resolve, WAIT_MS));
     try {
-      return await fetch(req);
-    } catch {
-      return new Response('Offline and not cached', {status: 503, headers: {'Content-Type': 'text/plain'}});
-    }
+      const fresh = await Promise.race([network, timeout]);
+      if (fresh) return fresh;
+    } catch {}
+    const saved = await cache.match(key);
+    if (saved) return saved;
+    try { return await network; } catch { return new Response('Offline', {status: 503}); }
   })());
 });

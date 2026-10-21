@@ -1,6 +1,6 @@
-import {mountCropTiles} from './crop-tiles.mjs?v=crop-tiles-v5';
-import {mountDurian} from './durian-guide.mjs?v=crop-tiles-v5';
-import {mountGuide} from './guide.mjs?v=crop-tiles-v5';
+import {mountCropTiles} from './crop-tiles.mjs';
+import {mountDurian} from './durian-guide.mjs';
+import {mountGuide} from './guide.mjs';
 import {chooseLanguage,localize,translateDom,translateText,prepareLanguageSelect} from './i18n.mjs';
 import {lessons as baseLessons,stages as baseStages,cases as baseCases,questions as baseQuestions,educationSources,exampleRatio,scoreAnswers} from './education.mjs';
 import {sources as researchSources} from './sources.mjs';
@@ -56,7 +56,7 @@ $('export-learning').onclick=()=>{
 prepareLanguageSelect(language);
 if(view.crop&&crops[view.crop])$('crop-select').value=view.crop;
 for(const id of ['carbon-demo','nitrogen-demo','water-demo'])if(Number.isFinite(view[id]))$(id).value=String(view[id]);
-$('language-switch').onchange=()=>{const lang=$('language-switch').value;persist();try{localStorage.setItem('cn-language-v1',lang);localStorage.setItem('cn-learning-view-v1',JSON.stringify({lesson,stage,crop:$('crop-select').value,cases:caseAnswers,...Object.fromEntries(['carbon-demo','nitrogen-demo','water-demo'].map(id=>[id,Number($(id).value)]))}));}catch{}const url=new URL(location.href);url.searchParams.set('lang',lang);location.assign(url.href);};
+$('language-menu').onclick=e=>{const pick=e.target.closest('[data-lang]');if(!pick)return;const lang=pick.dataset.lang;persist();try{localStorage.setItem('cn-language-v1',lang);localStorage.setItem('cn-learning-view-v1',JSON.stringify({lesson,stage,crop:$('crop-select').value,cases:caseAnswers,...Object.fromEntries(['carbon-demo','nitrogen-demo','water-demo'].map(id=>[id,Number($(id).value)]))}));}catch{}const url=new URL(location.href);url.searchParams.set('lang',lang);location.assign(url.href);};
 const guideTitle=mountGuide({language,crops,refs,esc,sources,onCrop:key=>{$('crop-select').value=key;renderCrop();go('crops');}});
 $('learning-menu-label').textContent=language==='zh'?'课程与工具':language==='ms'?'Pelajaran dan alat':'Lessons and tools';
 pages.guide=guideTitle;$('guide-nav-label').textContent=guideTitle;
